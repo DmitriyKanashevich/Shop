@@ -9,7 +9,7 @@ import {DrawMenu} from "./components/Menu";
 
 
 
-//promiseReducer
+
 function promiseReducer(state={}, {type, status, payload, error, name}){
     if (type === 'PROMISE'){
         return {
@@ -46,7 +46,7 @@ const reduce = combineReducers ({
 const store = createStore(reduce, applyMiddleware(thunk))
 
 
-//Запрос
+
 const getGQL = url => {
     return (query, variables={}) => fetch(url, {
         method: 'POST',
