@@ -1,81 +1,49 @@
 import './App.css';
-import React, { useState } from 'react';
-import {Provider, connect}   from 'react-redux';
-import thunk from 'redux-thunk';
-import {createStore, combineReducers, applyMiddleware} from 'redux';
-import {BrowserRouter as Router, Route, Link, useParams} from 'react-router-dom';
-import {DrawMenu} from "./components/Menu";
+import React from 'react';
+import {connect, Provider} from 'react-redux';
+import {Route, Redirect, Switch, BrowserRouter as Router} from 'react-router-dom';
+import Home from "./pages/Home";
+import {store} from "./services/store";
+import {actionRootCategories} from "./services/actionCategories";
+import Cart from "./pages/Cart";
+import {CLoginPage} from "./pages/Login";
+import Product from "./pages/Product";
+import ProductList from "./pages/ProductList";
+import {useState} from "react";
+import {processRegistration} from "./services/actionRegistration";
+import {UserPanel} from "./userPanel/UserPanel";
+import {AdminPanel} from "./adminPanel/AdminPanel";
+import {actionAllOrder} from "./adminPanel/adminServices/actionAllOrder";
+import {useDropzone} from "react-dropzone";
+import {useCallback} from "react";
+import {actionPromise} from "./services/promiseReduser";
+import {useEffect} from "react";
+import {shopGQL} from "./services/getQuery";
 
-
-
-
-
-function promiseReducer(state={}, {type, status, payload, error, name}){
-    if (type === 'PROMISE'){
-        return {
-            ...state,
-            [name]:{status, payload, error}
-        }
+const ProtectedRoute =({isAdmin, auth, component:C, fallback, ...props}) =>{
+    const Wrapper = (componentProps)=> {
+        isAdmin =JSON.parse(atob(localStorage.authToken.split('.')[1])).sub.acl[2] === 'admin';
+        return isAdmin ? <C {...componentProps}/> : <Redirect to={fallback} />
     }
-    return state
+    return <Route {...props} component={Wrapper}/>
 }
 
-const actionPending = name => ({type: 'PROMISE', status: 'PENDING', name})
-const actionResolved = (name, payload) => ({type: 'PROMISE', status: 'RESOLVED', name, payload})
-const actionRejected = (name, error) => ({type: 'PROMISE', status: 'REJECTED', name, error})
-const actionPromise = (name, promise) =>
-    async dispatch => {
-        dispatch(actionPending(name))
-        try{
-            let payload = await promise
-            dispatch(actionResolved(name, payload))
-            return payload
-        }
-        catch(error){
-            dispatch(actionRejected(name, error))
-        }
+const saveState = (state) => {
+    try {
+
+        const serialisedState = JSON.stringify(state);
+
+        window.localStorage.setItem('app_state', serialisedState);
+    } catch (err) {
+
     }
+};
+store.subscribe(() => {
+    saveState(store.getState());
+});
 
-const reduce = combineReducers ({
-    promise: promiseReducer,
-    auth: authReducer,
-    reg: registrReducer
-})
-
-
-const store = createStore(reduce, applyMiddleware(thunk))
-
-
-
-const getGQL = url => {
-    return (query, variables={}) => fetch(url, {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/json",
-            ...(localStorage.authToken ? {Authorization: localStorage.authToken} : {})
-        },
-        body: JSON.stringify({query, variables})
-    }).then(res => res.json()).then(data => {
-        if ("errors" in data) {
-            let error = new Error('Ошибка загрузки данных')
-            throw error
-        }
-        else {
-            return data
-        }
-    })
-}
-
-let shopGQL = getGQL('http://shop-roles.asmer.fs.a-level.com.ua/graphql')
-
-const actionRootCategories = () =>
-    actionPromise('rootCategories', shopGQL(`
-            query cats($query:String){
-              CategoryFind(query:$query){
-                _id name 
-              }
-            }
-        `, {CategoryFind:'', query: JSON.stringify([{parent:null}])}))
+store.subscribe(() => console.log(store.getState()))
+store.dispatch(actionAllOrder())
 store.dispatch(actionRootCategories())
 
 
@@ -83,66 +51,150 @@ store.dispatch(actionRootCategories())
 
 
 
-const jwtDecoder=(jwt)=>{
-    let reJwt=jwt.split('.')
-    return JSON.parse(reJwt[1])
+
+function MyDropzone({onDrop:drp}) {
+    const onDrop = useCallback(acceptedFiles => {
+        // Do something with the files
+        console.log(acceptedFiles)
+        drp(acceptedFiles[0])
+    }, [])
+    const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})
+
+    return (
+        <div {...getRootProps()}>
+            <input {...getInputProps()} />
+            {
+                isDragActive ?
+                    <p>Drop the files here ...</p> :
+                    <p>Drag 'n' drop some files here, or click to select files</p>
+            }
+        </div>
+    )
 }
 
-
-
-function registrReducer(state={},action){
-
-    if (action.type==='REGISTRATION'){
-        if(!localStorage.authToken){
-            return {token: action.jwt, payload: jwtDecoder(action.jwt)}
-        }
-
-    }
-    return state
+const uploadFile = file => {
+    let fd = new FormData()
+    fd.append('photo', file)
+    return fetch('http://shop-roles.asmer.fs.a-level.com.ua/upload', {
+        method: 'POST',
+        headers: localStorage.authToken ? {Authorization: 'Bearer ' + localStorage.authToken} : {},
+        body: fd
+    }).then(res => res.json()) /// сходить в корень бэка и посмотреть исходный код
 }
- function authReducer(state = {}, action) {
-    if (state === undefined) {
-        if (localStorage.authToken) {
-            action.jwt = localStorage.authToken
-            return {
-                token: action.jwt, payload: jwtDecoder(action.jwt)
+
+const actionUploadFile = file =>
+    actionPromise('upload', uploadFile(file))
+
+const actionUserById = (_id, promiseName) =>
+    actionPromise(promiseName || `user_${_id}`, shopGQL(`
+        query UserById($query: String){
+            UserFindOne(query: $query){
+                _id login avatar {
+                    _id url
+                }
             }
         }
-    }
-        if (action.type === 'LOGIN') {
-            if(localStorage.authToken){
-                console.log('fsdvsfv')
-            }
-            else{
-            return {token: action.jwt, payload: jwtDecoder(action.jwt)}}
-        }
-        if (action.type === 'LOGOUT') {
-            return {}
-        }
-        return state
+        `, {query: JSON.stringify([{_id}])}))
 
+const actionMe = () =>
+    async (dispatch, getState) => {
+        let myId = getState().auth?.payload?.sub?.id
+        if (myId){
+            await dispatch(actionUserById(myId, 'me'))
+        }
     }
 
-
-    const actionReg=(jwt)=>({type:'REGISTRATION',jwt})
-const actionLogin = (jwt) => ({type: 'LOGIN', jwt})
-
-
-
-
-const processRegistration=(login,password,nick)=>{
-    return(dispatch)=>{
-        shopGQL(`mutation reg($login:String, $password:String,$nick:String){
-        UserUpsert(user:{
-          login:$login, password:$password, nick:$nick
-        }){
-          _id
-          login
-          nick
+const actionChangeAvatar = avatarId =>
+    async (dispatch, getState) => {
+        let myId
+        if(localStorage.authToken) {
+            myId = JSON.parse(atob(localStorage.authToken.split('.')[1])).sub.id;
+            console.log(myId)
         }
-      }`, {login,password,nick})
+        else {
+            myId=""
+        }
+        if (myId){
+            await dispatch(actionPromise('setAvatar'), shopGQL(`
+            mutation setAvatar($myId: String, $avatarId: ID){
+                UserUpsert(user:{_id: $myId, avatar: {_id: $avatarId}}){
+                    _id, avatar{
+                        _id
+                        
+                    }
+                }
+            }`, {myId, avatarId}))
+        }
+    }
+
+const actionSetAvatar = file =>
+    async dispatch => {
+        let result = await dispatch(actionUploadFile(file))
+        console.log("id: "+result._id)
+        //pending + resolved/rejected
+        if (result?._id){
+            await dispatch(actionChangeAvatar(result._id)) //pending + resolved но уже в graphql
+            await dispatch(actionMe()) //pending + resolved по перечитке нашего юзера
+        }
+    }
+
+
+const CMyDropzone = connect(null, {onDrop: actionSetAvatar})(MyDropzone)
+
+
+
+const testDefaultJustForCheckLoozer ={
+    "_id": "5de56b335ee358137c393889",
+    "login": "tst",
+    "avatar": {
+        "_id": "5e348322ff46c6326de8c2f1",
+        "url": "images/8ba00060c8ceae2f4d213986df1b7158"
     }
 }
+
+let myId
+if(localStorage.authToken) {
+    myId = JSON.parse(atob(localStorage.authToken.split('.')[1])).sub.id;
+    console.log(myId)
+}
+else {
+    myId=""
+}
+const UserProfile = ({user:{login, avatar: {url}}}) =>
+    <div className='UserProfile'>
+        <h1>{login}</h1>
+        <img src={`http://shop-roles.asmer.fs.a-level.com.ua/${url}`} />
+    </div>
+
+const CUserProfile = connect((state, {myId}) => ({user: state.promise?.[`user_${myId}`]?.payload}))(UserProfile)
+
+const PageUser = ({match:{params: {myId}}, getData}) => {
+    useEffect(() => {
+        getData(myId)
+    },[myId])
+
+    return (
+        <div className='PageUser'>
+            <CUserProfile _id={myId}/>
+        </div>
+    )
+}
+
+const CPageUser = connect(null, {getData: actionUserById})(PageUser)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const RegPage = ({reg, onReg}) =>{
     console.log(reg);
@@ -164,67 +216,55 @@ const RegPage = ({reg, onReg}) =>{
 const CRegPage = connect(state => ({reg: state.reg}), {onReg:processRegistration})(RegPage)
 
 
-const processLogin = (login, password) => {
-    return (dispatch) => {
-        shopGQL(`query login($login:String, $password: String) {login(login:$login, password:$password)}`, { login, password })
-            .then(jwt => {
-                if (jwt) {
-                    localStorage.authToken = jwt.data.login
-                    console.log(jwt.data.login);
-                    dispatch(actionLogin(jwt.data.login))
-                } else {
-                    throw new Error('wrong')
-                }
-            })
-    }
-}
-
-const actionLogout = () => ({type: 'LOGOUT'})
-const thunkLogout = () => {
-    return (dispatch) => {
-        localStorage.authToken = ''
-        dispatch(actionLogout())
-    }
-}
-
-const LoginPage = ({auth, onLogin,onLogout}) =>{
-    console.log(auth);
-    const [login, setLogin] = useState('')
-    const [password, setPassword] = useState('')
-    return (
-        <div>
-            <input type='text' value={login} onChange={(e) => setLogin(e.target.value)} />
-            <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button disabled={!login.length || !password.length} onClick={() => onLogin(login, password)}>Log in</button>
-            <button  onClick={() => onLogout()}>Log out</button>
-
-        </div>
-    )
-}
-
-const CLoginPage = connect(state => ({auth: state.auth}), {onLogin:processLogin,onLogout:thunkLogout})(LoginPage)
 
 
 
-store.subscribe(() => console.log(store.getState()))
+
+
+
+
+
+
+
+
+
 
 
 
 function App() {
-    return (
+
+        return (
         <Provider store={store}>
             <div className="App">
-                <div className={"main-menu"}>
-
-                    <Router>
 
 
-                        <Route  component={CLoginPage} />
-                        <Route  component={CRegPage} />
-                        </Router>
 
 
-                </div>
+
+                   <Switch>
+                       <Route path="/goods/:_id_good" exact  component={Product}/>
+                       <ProtectedRoute  fallback="/auth" path="/vsd" component={ProductList}/>
+
+                       <Route path="/user/:_id" component={CPageUser} />
+
+                       <Route path="/drop" exact  component={CMyDropzone}/>
+                       <Route path="/Cart" exact  component={Cart}/>
+                       <Route path="/usercabinet" exact  component={UserPanel}/>
+                        <Route path="/categories/:_id_cat" component={ProductList} />
+                        <Route path="/" exact  component={Home}/>
+                        <Route path="/Home"  exact component={Home}  />
+                       <Route path="/admin"  exact component={AdminPanel}  />
+                       <Route path="/Register" exact   component={CRegPage} />
+                        <Route path="/login" exact   component={CLoginPage} />
+
+
+
+                   </Switch>
+
+
+
+
+
             </div>
         </Provider>);
 }

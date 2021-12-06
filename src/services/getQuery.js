@@ -1,21 +1,21 @@
 export const getGQL = url => {
-    return function (query, variables = {}) {
-        return fetch(url, {
-            method: 'POST',
-            headers:
-                {
-                    'Content-Type': 'application/json',
-                    ...(localStorage.authToken ? {Authorization: localStorage.authToken} : {})
-                },
-            body: JSON.stringify({query, variables})
-        }).then(resp => resp.json())
-            .then(data => {
-                if ('error' in data) {
-                    throw new Error('ERROR')
-                } else {
-                    return data
-                }
-            })
-    }
+    return (query, variables={}) => fetch(url, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json",
+            ...(localStorage.authToken ? {Authorization: 'Bearer ' + localStorage.authToken} : {})
+        },
+        body: JSON.stringify({query, variables})
+    }).then(res => res.json()).then(data => {
+        if (!data) {
+            let error = new Error('Error data loading')
+            throw error
+        }
+        else {
+            return data
+        }
+    })
 }
-export const shopGQL = getGQL('http://shop-roles.asmer.fs.a-level.com.ua/graphql')
+export const urlUpload = "http://shop-roles.asmer.fs.a-level.com.ua";
+
+export const  shopGQL = getGQL('http://shop-roles.asmer.fs.a-level.com.ua/graphql')
