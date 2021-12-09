@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { popularProducts } from "../data";
 import {Link, useParams} from "react-router-dom";
 import {connect} from "react-redux";
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import {actionCategoryById} from "../services/actionCategById";
 import {mobile} from "../responsive";
 import Card from '@mui/material/Card';
@@ -83,10 +83,17 @@ export const CategoryDraw = ({category:{name, goods=[]}}) =>{
                         </Typography>
                         <Typography variant="h5" component="div">
                             {e.price + ' Грн'}
-                            <Link to={`/goods/${e._id}`}> <Button style={{marginLeft: "150px"}} variant="contained"
+                            { !localStorage.authToken ?  <Link to={`/goods/${e._id}`}> <Button style={{marginLeft: "150px"}} variant="contained"
                                                                   href="#contained-buttons">
-                                Купить
-                            </Button></Link>
+                                Подробнее
+                            </Button></Link>: JSON.parse(atob(localStorage.authToken.split('.')[1])).sub.acl[2]?
+                               <div>
+
+                                <Link to={`/goodredact/${e._id}`}> <Button style={{marginLeft: "150px"}} variant="contained"
+                                                                      href="#contained-buttons">
+                                    Редактировать товар
+                                </Button></Link></div>
+                                :<div> </div> }
                         </Typography>
                     </CardContent>
                 </CardActionArea>
@@ -100,15 +107,7 @@ export const CategoryDraw = ({category:{name, goods=[]}}) =>{
 
             {categoryPageHead }
             <FilterContainer>
-                <Filter>
 
-                    <FilterText>Сортировать по:</FilterText>
-                    <Select>
-                        <Option selected>Популярности</Option>
-                        <Option>Цене (возр.)</Option>
-                        <Option>Цене (убыв.)</Option>
-                    </Select>
-                </Filter>
             </FilterContainer>
             <hr></hr>
             {categoryPageBody}

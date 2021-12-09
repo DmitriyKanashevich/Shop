@@ -6,8 +6,8 @@ import { mobile } from "../responsive";
 import {CPageCategory} from "../components/Product";
 import {connect} from "react-redux";
 import {actionCartAdd} from "../services/cartReducer";
-import {useParams} from "react-router-dom";
-import {useEffect} from "react";
+import {Link, useParams} from "react-router-dom";
+import React, {useEffect} from "react";
 import {actionGoodById} from "../services/actionGoodById";
 const Container = styled.div``;
 
@@ -147,6 +147,7 @@ const GoodsDraw =({goods:{name, images, price, description, _id,count}, onAdd}) 
                 <AddContainer>
 
                     <Button disabled={!localStorage.authToken} onClick={()=> onAdd(_id, name, price,count,images)} >Добавить в корзину</Button>
+
                 </AddContainer>
             </InfoContainer>
         </Wrapper>

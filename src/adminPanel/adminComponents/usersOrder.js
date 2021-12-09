@@ -45,10 +45,12 @@ export const DrawOrder = () =>{
                     <Grid item xs>
                         <Item>{value.owner.login}</Item>
                     </Grid>
+
                 </Grid>
             </Box>
             :[]
     )
+
     return (
         <div>
             {cat}

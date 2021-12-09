@@ -8,7 +8,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import {Link, useParams} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import {useEffect} from "react";
 import {CMyDropzone, CUserDrow, PageUser} from "./userComponents/userInfo";
 import {actionUserById} from "./userServices/actionUserById";
@@ -40,10 +40,12 @@ const Item = styled(Paper)(({ theme }) => ({
 const imegesHref ='http://shop-roles.asmer.fs.a-level.com.ua/';
 
 export const DrawOrder = () =>{
+
     const [order, setOrder] = useState([])
     store.subscribe(() => setOrder(store.getState().promise?.AllOrder?.payload?.data?.OrderFind||[]))
     var cat = order.map((value) =>
-        value.orderGoods!=null &&value.orderGoods.length!= 0&&value.total!=null
+
+        value.orderGoods!=null && value.orderGoods.length!= 0 && value.total!=null
             ? <Box sx={{ flexGrow: 1 }}>
                 <Grid container spacing={3}>
                     <Grid item xs>
@@ -103,17 +105,17 @@ export const DrawOrder = () =>{
 
 
 
-export function UserPanel() {
+export function UserOrder() {
 
     return (
         <>
-<Navbar/>
+            <Navbar/>
 
 
-            <CUserDrow/>
+            <DrawOrder/>
 
 
 
-            </>
-            );
-            }
+        </>
+    );
+}

@@ -92,7 +92,7 @@ export const CategoryDraw = ({category:{ goods=[]}}) =>{
 
         <Container>
 
-            <Image src={imegesHref + e.images[0].url}/>
+            <Image src={e.images[0]?imegesHref + e.images[0].url:"http://shop-roles.asmer.fs.a-level.com.ua/"}/>
             <Circle />
             <Info>
                 <Icon>

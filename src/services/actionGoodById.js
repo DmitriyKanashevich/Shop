@@ -9,4 +9,3 @@ export const actionGoodById = (_id) =>
         }
         }
     }`, {query: JSON.stringify([{_id}])}));
-

@@ -6,18 +6,22 @@ import {registrReducer} from "./registrationReducer";
 import cartReducer from "./cartReducer";
 import {actionUserById} from "../userPanel/userServices/actionUserById";
 import {actionAllOrder} from "../adminPanel/adminServices/actionAllOrder";
-import {actionAddGood} from "../adminPanel/adminServices/actionAddGood";
+import { processAddGood} from "../adminPanel/adminServices/actionAddGood";
 import {getCategoriesCount} from "../adminPanel/adminServices/actionGetCategories";
-
+import {processRedact} from "../userPanel/userServices/actionRedactUser";
+import {processRedactGood} from "../adminPanel/adminServices/actionRedactGood";
 export const reduce = combineReducers ({
     promise: promiseReducer,
     auth: authReducer,
     reg: registrReducer,
     cart:  cartReducer,
     userById: actionUserById,
-    addGood: actionAddGood,
     AllOrder: actionAllOrder,
-    getCat: getCategoriesCount
+    getCat: getCategoriesCount,
+    onRedactUser:processRedact,
+    addGood:processAddGood,
+    redactGood:processRedactGood
 })
+
 
 export const store = createStore(reduce, applyMiddleware(thunk))

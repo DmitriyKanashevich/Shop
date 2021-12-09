@@ -10,6 +10,7 @@ import {connect} from "react-redux";
 import {actionCartAdd, actionCartRemove} from "../services/cartReducer";
 import {actionCartSet} from "../services/cartReducer";
 import {actionCartClear} from "../services/cartReducer";
+import {shopGQL} from "../services/getQuery";
 const Container = styled.div``;
 
 const Wrapper = styled.div`
@@ -161,80 +162,114 @@ const Button = styled.button`
 
 
 
-export const CartPage = ({cart, onRemove, onSet, onClear}) => {
+export const CartPage = ({cart, onRemove, onSet,onAdd, onClear}) => {
     let cost = 0;
     for (let goodId in cart){
         cost += cart[goodId].price * cart[goodId].count
     }
 
+     const orderPush = (id,count) => {
+        console.log(id)
+        console.log(count)
+
+        shopGQL(`
+                 mutation newOrder($id:ID,$count:Int!){
+                OrderUpsert(order:{orderGoods:{
+                  count:$count
+                good:{_id:$id
+
+                  
+                
+                }
+                  
+                }}){
+                    _id,
+          owner {
+            _id
+            createdAt
+            login
+            nick
+          }
+          
+          }
+   } `
+            ,  {id,count}
+        )
+    }
 
 
     let Pages = Object.entries(cart).map(([key, value]) =>
 
+        <Product>
+            <ProductDetail>
 
 
-        <Wrapper>
-                <Title>КОРЗИНА</Title>
-                <Top>
-                    <TopButton>ПРОДОЛЖИТЬ ПОКУПКИ</TopButton>
-                    <TopButton type="filled" onClick={() => onClear()} disabled={!Object.keys(cart).length}>ОЧИСТИТЬ КОРЗИНУ</TopButton>
-                </Top>
-                <Bottom>
-                    <Info>
+                <Details>
+                    <ProductName>
+                        <b>ТОВАР:</b> {value.good.name}
+                    </ProductName>
+                    <ProductId>
+                        <b>ID товара:</b> {value.good._id}
+                    </ProductId>
+
+                </Details>
+            </ProductDetail>
+            <PriceDetail>
+                <ProductAmountContainer>
+
+                    < button onClick={(e) => onSet(value.good._id, value.good.name, value.price,parseInt(value.count)+1)}> <Add /> </button>
+
+                    <ProductAmount> <input id="Breaks" value={value.count > 0 ? value.count : 1} type='number'onChange={(e) => onSet(value.good._id, value.good.name, value.price, e.target.value)}/>
+                    </ProductAmount>
+                    < button onClick={(e) => onSet(value.good._id, value.good.name, value.price,parseInt(value.count)-1)}><Remove/> </button>
+                </ProductAmountContainer>
+                <ProductPrice>{'Цена: ' + value.price}</ProductPrice>
+            </PriceDetail>
+            <button onClick={(e) => orderPush(value.good._id, parseInt(value.count))}>Оформить</button>
+
+        </Product>
 
 
-                        <Product>
-                            <ProductDetail>
-
-
-                                <Details>
-                                    <ProductName>
-                                        <b>ТОВАР:</b> {value.good.name}
-                                    </ProductName>
-                                    <ProductId>
-                                        <b>ID товара:</b> {value.good._id}
-                                    </ProductId>
-
-                                </Details>
-                            </ProductDetail>
-                            <PriceDetail>
-                                <ProductAmountContainer>
-
-                                    < button onClick={(e) => onSet(value.good._id, value.good.name, value.price,parseInt(value.count)+1)}> <Add /> </button>
-
-                                    <ProductAmount> <input id="Breaks" value={value.count > 0 ? value.count : 1} type='number'onChange={(e) => onSet(value.good._id, value.good.name, value.price, e.target.value)}/>
-                                    </ProductAmount>
-                                    < button onClick={(e) => onSet(value.good._id, value.good.name, value.price,parseInt(value.count)-1)}><Remove/> </button>
-                                </ProductAmountContainer>
-                                <ProductPrice>{'Цена: ' + value.price}</ProductPrice>
-                            </PriceDetail>
-                        </Product>
-                        <Hr />
-
-                    </Info>
-                    <Summary>
-                        <SummaryTitle>Подсчет корзины</SummaryTitle>
-                        <SummaryItem type="total">
-                            <SummaryItemText>Всего</SummaryItemText>
-                            <SummaryItemPrice>{cost}</SummaryItemPrice>
-                        </SummaryItem>
-                        <Button>Оформить</Button>
-                    </Summary>
-                </Bottom>
-
-            </Wrapper>
 
     )
     return (
 <div>
-          {Pages}
+    <Wrapper>
+    <Title>КОРЗИНА</Title>
+    <Top>
+
+        <TopButton type="filled" onClick={() => onClear()} disabled={!Object.keys(cart).length}>ОЧИСТИТЬ КОРЗИНУ</TopButton>
+    </Top>
+    <Bottom>
+        <Info>
+
+            {Pages}
+
+            <Hr />
+
+        </Info>
+        <Summary>
+            <SummaryTitle>Подсчет корзины</SummaryTitle>
+            <SummaryItem type="total">
+                <SummaryItemText>Всего</SummaryItemText>
+                <SummaryItemPrice>{cost}</SummaryItemPrice>
+            </SummaryItem>
+
+
+        </Summary>
+    </Bottom>
+
+</Wrapper>
+
 
 </div>
 
     )
 }
 
-export const CCartPage = connect(state =>({cart: state.cart}), {onRemove:actionCartRemove,onAdd:actionCartAdd, onSet:actionCartSet, onClear:actionCartClear})(CartPage)
+
+
+export const CCartPage = connect(state =>({cart: state.cart}), {onRemove:actionCartRemove, onSet:actionCartSet, onClear:actionCartClear})(CartPage)
 
 
 

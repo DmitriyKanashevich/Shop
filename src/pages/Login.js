@@ -13,9 +13,11 @@ import {shopGQL} from "../services/getQuery";
 import { createBrowserHistory } from "history";
 import { Router, Route, Switch ,Redirect} from 'react-router-dom';
 import { useHistory } from 'react-router-dom'
+import Navbar from "../components/Navbar";
+
 const Container = styled.div`
   border: none;
-  height: 100vh;
+  height: 90vh;
   position: sticky;
   line-height: 30%;
   background: linear-gradient(
@@ -77,9 +79,6 @@ const Link = styled.a`
 `;
 
 
-const onHomePage=()=>{
-    return  window.location.href = "/"
-}
 
 
 export const Login = ({auth, onLogin,onLogout}) =>{
@@ -88,19 +87,23 @@ export const Login = ({auth, onLogin,onLogout}) =>{
     const [password, setPassword] = useState('')
 
     return (
+<div>
+    <Navbar/>
         <Container>
+
             <Wrapper>
                 <Title>Авторизация</Title>
                 <Form >
                     <Input placeholder="username" type='text' value={login} onChange={(e) => setLogin(e.target.value)}  />
                     <Input placeholder="password" type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
 
-                   <Button type="button" disabled={!login.length || !password.length} onClick={(event) => onLogin(login, password) }  >Войти</Button>
-                    <Button  onClick={() => onHomePage()}>Вернуться на главную</Button>
-                    <Link to={'/Register'}>Регистрация</Link>
+                   <Button type="button" disabled={!login.length || !password.length} onClick={() => onLogin(login, password) }  >Войти</Button>
+
+
                 </Form>
             </Wrapper>
         </Container>
+</div>
     );
 };
 

@@ -20,10 +20,6 @@ const Home = () => {
             <Slider/>
             <Product/>
 
-
-
-
-
         </div>
     );
 };

@@ -1,11 +1,12 @@
 import {connect} from "react-redux";
-import {useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import React, {useCallback, useEffect} from "react";
 import styled from "styled-components";
 import {actionUserById} from "../userServices/actionUserById";
 import {useDropzone} from "react-dropzone";
 import {actionPromise} from "../../services/promiseReduser";
 import {shopGQL} from "../../services/getQuery";
+import Button from "@mui/material/Button";
 
 const Image = styled.img`
   height: 150px;
@@ -23,8 +24,10 @@ if(avatar){
         console.log("no image")
     }}
     const userPage =
-        <div>
+        <div style={{  display: 'flex',  justifyContent:'center', alignItems:'center',flexDirection:"column"}}>
             <h1>Личные данные</h1>
+            <Button style={{ color: "black", textDecoration:'none' }}><Link  style={{ color: "black", textDecoration:'none' }} to={"/userredact"}  >Редактировать профиль</Link></Button>
+
             <h2>Аватар</h2>
             {urlImage ?
                 <Image src={imegesHref + urlImage}/>

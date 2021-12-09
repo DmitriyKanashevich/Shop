@@ -3,6 +3,7 @@ import { mobile } from "../responsive";
 import React, {useState} from "react";
 import {connect} from "react-redux";
 import {processRegistration} from "../services/actionRegistration";
+import {Link} from "react-router-dom";
 
 const Container = styled.div`
   width: 100vw;
@@ -11,8 +12,8 @@ const Container = styled.div`
       rgba(255, 255, 255, 0.5),
       rgba(255, 255, 255, 0.5)
     ),
-    url("https://images.pexels.com/photos/6984661/pexels-photo-6984661.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940")
-      center;
+  url("https://demiart.ru/forum/uploads/post-40044-1202622058.jpg")
+  center;
   background-size: cover;
   display: flex;
   align-items: center;
@@ -66,6 +67,43 @@ const Button = styled.button`
 
 
 
+export const onHomePage=()=>{
+    return  window.location.href = "/"
+}
 
+
+export const Register = ({reg, onReg}) => {
+    console.log(reg);
+    const [login, setLogin] = useState('')
+    const [password, setPassword] = useState('')
+    const [nick, setNick] = useState('')
+
+    return (
+        <Container>
+            <Wrapper>
+                <Title>Создать новый акаунт</Title>
+                <Form>
+
+                  <input type='text' value={login} placeholder={"Логин"} onChange={(e) => setLogin(e.target.value)} />
+
+                    <input type='password' value={password} placeholder={"Пароль"}  onChange={(e) => setPassword(e.target.value)} />
+
+                  <input type='text' value={nick} placeholder={"Никнейм"} onChange={(e) => setNick(e.target.value)} />
+
+                  <Agreement>
+                        By creating an account, I consent to the processing of my personal
+                        data in accordance with the <b>PRIVACY POLICY</b>
+                    </Agreement>
+                    <Button onClick={() => onReg(login, password,nick)}>Зарегестрироваться</Button>
+                    <Button ><Link to={"/Home"} style={{ color: "white", textDecoration:'none' }}>  На главную
+                    </Link> </Button>
+                </Form>
+            </Wrapper>
+        </Container>
+    );
+};
+
+
+export const CRegPage = connect(state => ({reg: state.reg}), {onReg:processRegistration})(Register)
 
 
